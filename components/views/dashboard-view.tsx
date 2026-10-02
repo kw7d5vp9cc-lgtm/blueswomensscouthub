@@ -219,6 +219,7 @@ const futureActions = upcomingActions.filter(
       </div>
     </>
   )}
-</div>
-      )
+    </div>
+  </div>
+  )
 }
