@@ -19,7 +19,10 @@ export function PlayerPortalView({ query }: { query: string }) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
-  async function load() {
+const [playerReports, setPlayerReports] = useState<any[]>([])
+const [reportsLoading, setReportsLoading] = useState(false)
+
+async function load() {
     try {
       const data = await getPlayers()
       setPlayers(data as unknown as Player[])
@@ -30,7 +33,57 @@ export function PlayerPortalView({ query }: { query: string }) {
 
   useEffect(() => {
     load()
-  }, [])
+  }
+  async function loadPlayerReports(playerId: string) {
+  if (!supabase) return
+
+  setReportsLoading(true)
+  setError('')
+
+  const { data, error } = await supabase
+    .from('reports')
+    .select(`
+      id,
+      score,
+      submitted_at,
+      fixture_id,
+      fixtures (
+        home_team,
+        away_team,
+        fixture_date,
+        fixture_reference
+      ),
+      profiles!reports_scout_id_fkey (
+        full_name
+      ),
+      report_assessments (
+        technical_score,
+        tactical_score,
+        physical_score,
+        mentality_score,
+        showed_something_special,
+        strengths,
+        development_areas
+      )
+    `)
+    .eq('player_id', playerId)
+    .order('submitted_at', { ascending: false })
+
+  if (error) {
+    setError(error.message)
+    setPlayerReports([])
+  } else {
+    setPlayerReports(data || [])
+  }
+
+  setReportsLoading(false)
+}
+
+async function openPlayerProfile(player: Player) {
+  setSelectedPlayer(player)
+  setPlayerReports([])
+  await loadPlayerReports(player.id)
+}, [])
 
   const term = query.toLowerCase().trim()
 
@@ -157,7 +210,7 @@ export function PlayerPortalView({ query }: { query: string }) {
                   <td>
   <button
     type="button"
-    onClick={() => setSelectedPlayer(player)}
+    onClick={() => openPlayerProfile(player)}
     style={{
       background: 'none',
       border: 'none',
@@ -354,6 +407,83 @@ export function PlayerPortalView({ query }: { query: string }) {
                 {selectedPlayer.recruitment_status}
               </span>
             </div>
+            <div className="panel" style={{ marginTop: 20 }}>
+  <div className="panelhead">
+    <h2>Scouting history</h2>
+    <span className="badge">{playerReports.length} reports</span>
+  </div>
+
+  {reportsLoading && (
+    <p className="muted">Loading scouting history...</p>
+  )}
+
+  {!reportsLoading && playerReports.length === 0 && (
+    <p className="muted">No scouting reports found.</p>
+  )}
+
+  {!reportsLoading && playerReports.length > 0 && (
+    <div style={{ overflowX: 'auto' }}>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Fixture</th>
+            <th>Scout</th>
+            <th>Overall</th>
+            <th>Technical</th>
+            <th>Tactical</th>
+            <th>Physical</th>
+            <th>Mentality</th>
+            <th>Special?</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {playerReports.map((report) => {
+            const assessment = Array.isArray(report.report_assessments)
+              ? report.report_assessments[0]
+              : report.report_assessments
+
+            return (
+              <tr key={report.id}>
+                <td>
+                  {report.fixtures?.fixture_date ||
+                    report.submitted_at?.slice(0, 10) ||
+                    '—'}
+                </td>
+
+                <td>
+                  {report.fixtures
+                    ? `${report.fixtures.home_team} v ${report.fixtures.away_team}`
+                    : '—'}
+                </td>
+
+                <td>{report.profiles?.full_name || '—'}</td>
+
+                <td>
+                  <strong>{report.score || '—'}</strong>
+                </td>
+
+                <td>{assessment?.technical_score || '—'}</td>
+                <td>{assessment?.tactical_score || '—'}</td>
+                <td>{assessment?.physical_score || '—'}</td>
+                <td>{assessment?.mentality_score || '—'}</td>
+
+                <td>
+                  {assessment?.showed_something_special === true
+                    ? 'Yes'
+                    : assessment?.showed_something_special === false
+                      ? 'No'
+                      : '—'}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
           </div>
         </div>
       )}
