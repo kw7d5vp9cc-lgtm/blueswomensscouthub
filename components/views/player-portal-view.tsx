@@ -84,7 +84,7 @@ async function openPlayerProfile(player: Player) {
   setSelectedPlayer(player)
   setPlayerReports([])
   await loadPlayerReports(player.id)
-}, [])
+}
 
   const term = query.toLowerCase().trim()
 
