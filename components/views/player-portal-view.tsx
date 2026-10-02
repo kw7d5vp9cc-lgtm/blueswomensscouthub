@@ -66,6 +66,57 @@ async function loadClubs() {
 const filteredClubs = clubs.filter((club: any) =>
   club.name.toLowerCase().includes(clubSearch.toLowerCase())
 )
+
+    async function addNewClub() {
+  if (!supabase) return
+
+  const clubName = clubSearch.trim()
+
+  if (!clubName) return
+
+  setError('')
+
+  const existingClub = clubs.find(
+    (club: any) => club.name.toLowerCase() === clubName.toLowerCase()
+  )
+
+  if (existingClub) {
+    setForm({
+      ...form,
+      club_id: existingClub.id,
+    })
+    setClubSearch(existingClub.name)
+    setClubDropdownOpen(false)
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('clubs')
+    .insert({
+      name: clubName,
+      club_type: 'Grassroots / Other',
+      active: true,
+    })
+    .select('id, name')
+    .single()
+
+  if (error) {
+    setError(error.message)
+    return
+  }
+
+  setClubs((current) =>
+    [...current, data].sort((a, b) => a.name.localeCompare(b.name))
+  )
+
+  setForm({
+    ...form,
+    club_id: data.id,
+  })
+
+  setClubSearch(data.name)
+  setClubDropdownOpen(false)
+}
 async function loadPlayerReports(playerId: string) {
   if (!supabase) return
 
@@ -540,15 +591,28 @@ async function updateRecruitmentStatus(status: string) {
         }}
       >
         {filteredClubs.length === 0 ? (
-          <div
-            style={{
-              padding: 12,
-              color: '#667085',
-            }}
-          >
-            No clubs found
-          </div>
-        ) : (
+  <div style={{ padding: 12 }}>
+    <div
+      style={{
+        color: '#667085',
+        marginBottom: 10,
+      }}
+    >
+      No clubs found
+    </div>
+
+    {clubSearch.trim() && (
+      <button
+        type="button"
+        className="btn secondary"
+        style={{ width: '100%' }}
+        onClick={addNewClub}
+      >
+        + Add "{clubSearch.trim()}"
+      </button>
+    )}
+  </div>
+) : (
           filteredClubs.map((club) => (
             <button
               key={club.id}
