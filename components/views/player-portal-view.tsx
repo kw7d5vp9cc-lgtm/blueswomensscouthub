@@ -16,8 +16,18 @@ const emptyForm = {
 export function PlayerPortalView({ query }: { query: string }) {
   const [players, setPlayers] = useState<Player[]>([])
   const [clubs, setClubs] = useState<any[]>([])
-    const [clubSearch, setClubSearch] = useState('')
-const [clubDropdownOpen, setClubDropdownOpen] = useState(false)
+  const [clubSearch, setClubSearch] = useState('')
+  const [clubDropdownOpen, setClubDropdownOpen] = useState(false)
+
+  const [editPlayerOpen, setEditPlayerOpen] = useState(false)
+  const [editPlayerForm, setEditPlayerForm] = useState({
+    full_name: '',
+    date_of_birth: '',
+    position: '',
+    preferred_foot: '',
+    club_id: '',
+  })
+
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
@@ -116,6 +126,50 @@ const filteredClubs = clubs.filter((club: any) =>
 
   setClubSearch(data.name)
   setClubDropdownOpen(false)
+}
+
+    async function saveEditedPlayer() {
+  if (!supabase || !selectedPlayer) return
+
+  setError('')
+  setMessage('')
+
+  const normalizedName = editPlayerForm.full_name.trim()
+
+  if (!normalizedName || !editPlayerForm.date_of_birth) {
+    setError('Player name and date of birth are required.')
+    return
+  }
+
+  const { error: updateError } = await supabase
+    .from('players')
+    .update({
+      full_name: normalizedName,
+      date_of_birth: editPlayerForm.date_of_birth,
+      position: editPlayerForm.position || null,
+      preferred_foot: editPlayerForm.preferred_foot || null,
+      club_id: editPlayerForm.club_id || null,
+    })
+    .eq('id', selectedPlayer.id)
+
+  if (updateError) {
+    setError(updateError.message)
+    return
+  }
+
+  await load()
+
+  const refreshedPlayers = await getPlayers()
+  const refreshedPlayer = (refreshedPlayers as any[]).find(
+    (player) => player.id === selectedPlayer.id
+  )
+
+  if (refreshedPlayer) {
+    setSelectedPlayer(refreshedPlayer as Player)
+  }
+
+  setEditPlayerOpen(false)
+  setMessage('Player updated successfully.')
 }
 async function loadPlayerReports(playerId: string) {
   if (!supabase) return
@@ -678,12 +732,33 @@ setError('')
                 <span className="muted">Player profile</span>
               </div>
 
-              <button
-                className="btn secondary"
-                onClick={() => setSelectedPlayer(null)}
-              >
-                Close
-              </button>
+             <div className="actions">
+  <button
+    className="btn primary"
+    onClick={() => {
+      if (!selectedPlayer) return
+
+      setEditPlayerForm({
+        full_name: selectedPlayer.full_name || '',
+        date_of_birth: selectedPlayer.date_of_birth || '',
+        position: selectedPlayer.position || '',
+        preferred_foot: selectedPlayer.preferred_foot || '',
+        club_id: selectedPlayer.club_id || '',
+      })
+
+      setEditPlayerOpen(true)
+    }}
+  >
+    Edit player
+  </button>
+
+  <button
+    className="btn secondary"
+    onClick={() => setSelectedPlayer(null)}
+  >
+    Close
+  </button>
+</div>
             </div>
 
             <div className="grid grid3">
@@ -906,7 +981,132 @@ setError('')
           </div>
               </div>
            )}
-     
+     {editPlayerOpen && selectedPlayer && (
+  <div className="overlay">
+    <div className="modal">
+      <div className="panelhead">
+        <div>
+          <h2>Edit player</h2>
+          <span className="muted">
+            Update player details
+          </span>
+        </div>
+
+        <button
+          className="btn secondary"
+          onClick={() => setEditPlayerOpen(false)}
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="grid grid2">
+        <div className="field">
+          <label>Full name *</label>
+          <input
+            value={editPlayerForm.full_name}
+            onChange={(e) =>
+              setEditPlayerForm({
+                ...editPlayerForm,
+                full_name: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="field">
+          <label>Date of birth *</label>
+          <input
+            type="date"
+            value={editPlayerForm.date_of_birth}
+            onChange={(e) =>
+              setEditPlayerForm({
+                ...editPlayerForm,
+                date_of_birth: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="field">
+          <label>Position</label>
+          <select
+            value={editPlayerForm.position}
+            onChange={(e) =>
+              setEditPlayerForm({
+                ...editPlayerForm,
+                position: e.target.value,
+              })
+            }
+          >
+            <option value="">Select position</option>
+            <option value="GK">GK</option>
+            <option value="FB">FB</option>
+            <option value="CB">CB</option>
+            <option value="CM">CM</option>
+            <option value="W">W</option>
+            <option value="CF">CF</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Preferred foot</label>
+          <select
+            value={editPlayerForm.preferred_foot}
+            onChange={(e) =>
+              setEditPlayerForm({
+                ...editPlayerForm,
+                preferred_foot: e.target.value,
+              })
+            }
+          >
+            <option value="">Select...</option>
+            <option value="Right">Right</option>
+            <option value="Left">Left</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Current club</label>
+          <select
+            value={editPlayerForm.club_id}
+            onChange={(e) =>
+              setEditPlayerForm({
+                ...editPlayerForm,
+                club_id: e.target.value,
+              })
+            }
+          >
+            <option value="">No club selected</option>
+
+            {clubs.map((club: any) => (
+              <option key={club.id} value={club.id}>
+                {club.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="actions" style={{ marginTop: 20 }}>
+        <button
+          className="btn secondary"
+          onClick={() => setEditPlayerOpen(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn primary"
+          onClick={saveEditedPlayer}
+        >
+          Save changes
+        </button>
+      </div>
+    </div>
+  </div>
+)}
               {selectedReport && (
         <div className="overlay">
           <div className="modal">
