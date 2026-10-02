@@ -22,7 +22,15 @@ export function PlayerPortalView({ query }: { query: string }) {
 const [playerReports, setPlayerReports] = useState<any[]>([])
 const [reportsLoading, setReportsLoading] = useState(false)
 const [selectedReport, setSelectedReport] = useState<any | null>(null)
-  
+const [recruitmentActions, setRecruitmentActions] = useState<any[]>([])
+const [actionOpen, setActionOpen] = useState(false)
+const [actionForm, setActionForm] = useState({
+  action_type: '',
+  action_date: '',
+  notes: '',
+  next_contact_date: '',
+  next_contact_action: '',
+})  
 async function load() {
     try {
       const data = await getPlayers()
@@ -80,7 +88,16 @@ async function loadPlayerReports(playerId: string) {
 
   setReportsLoading(false)
 }
+async function openPlayerProfile(player: Player) {
+  setSelectedPlayer(player)
+  setPlayerReports([])
+  setRecruitmentActions([])
 
+  await Promise.all([
+    loadPlayerReports(player.id),
+    loadRecruitmentActions(player.id),
+  ])
+}
 async function openPlayerProfile(player: Player) {
   setSelectedPlayer(player)
   setPlayerReports([])
@@ -118,6 +135,57 @@ async function updateRecruitmentStatus(status: string) {
   )
 
   setMessage('Recruitment status updated successfully.')
+}
+  async function saveRecruitmentAction() {
+  if (!supabase || !selectedPlayer) return
+
+  setError('')
+  setMessage('')
+
+  if (!actionForm.action_type || !actionForm.action_date) {
+    setError('Action type and action date are required.')
+    return
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    setError('You must be signed in to add a recruitment action.')
+    return
+  }
+
+  const { error: insertError } = await supabase
+    .from('recruitment_actions')
+    .insert({
+      player_id: selectedPlayer.id,
+      action_type: actionForm.action_type,
+      action_date: actionForm.action_date,
+      notes: actionForm.notes || null,
+      next_contact_date: actionForm.next_contact_date || null,
+      next_contact_action: actionForm.next_contact_action || null,
+      created_by: user.id,
+    })
+
+  if (insertError) {
+    setError(insertError.message)
+    return
+  }
+
+  setActionForm({
+    action_type: '',
+    action_date: '',
+    notes: '',
+    next_contact_date: '',
+    next_contact_action: '',
+  })
+
+  setActionOpen(false)
+  setMessage('Recruitment action added successfully.')
+
+  await loadRecruitmentActions(selectedPlayer.id)
 }
   const term = query.toLowerCase().trim()
 
@@ -458,6 +526,57 @@ async function updateRecruitmentStatus(status: string) {
     </select>
   </div>
 </div>
+  <div className="panel" style={{ marginTop: 20 }}>
+  <div className="panelhead">
+    <div>
+      <h2>Recruitment actions</h2>
+      <span className="muted">
+        Track recruitment activity and next steps
+      </span>
+    </div>
+
+    <button
+      className="btn primary"
+      onClick={() => setActionOpen(true)}
+    >
+      + Add action
+    </button>
+  </div>
+
+  {recruitmentActions.length === 0 ? (
+    <p className="muted">No recruitment actions recorded.</p>
+  ) : (
+    <div style={{ overflowX: 'auto' }}>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Action</th>
+            <th>Notes</th>
+            <th>Next contact</th>
+            <th>Next action</th>
+            <th>Created by</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {recruitmentActions.map((action) => (
+            <tr key={action.id}>
+              <td>{action.action_date || '—'}</td>
+              <td>
+                <strong>{action.action_type || '—'}</strong>
+              </td>
+              <td>{action.notes || '—'}</td>
+              <td>{action.next_contact_date || '—'}</td>
+              <td>{action.next_contact_action || '—'}</td>
+              <td>{action.profiles?.full_name || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div> 
             <div className="panel" style={{ marginTop: 20 }}>
   <div className="panelhead">
     <h2>Scouting history</h2>
@@ -657,6 +776,123 @@ async function updateRecruitmentStatus(status: string) {
           </div>
         </div>
       )}
+ {actionOpen && selectedPlayer && (
+  <div className="overlay">
+    <div className="modal">
+      <div className="panelhead">
+        <div>
+          <h2>Add recruitment action</h2>
+          <span className="muted">{selectedPlayer.full_name}</span>
+        </div>
+
+        <button
+          className="btn secondary"
+          onClick={() => setActionOpen(false)}
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="formgrid" style={{ marginTop: 20 }}>
+        <div className="field">
+          <label>Action type *</label>
+          <select
+            value={actionForm.action_type}
+            onChange={(e) =>
+              setActionForm({
+                ...actionForm,
+                action_type: e.target.value,
+              })
+            }
+          >
+            <option value="">Select action...</option>
+            <option value="Watch Again">Watch Again</option>
+            <option value="Contact Club">Contact Club</option>
+            <option value="Contact Parent">Contact Parent</option>
+            <option value="Invite to Trial">Invite to Trial</option>
+            <option value="Trial Feedback">Trial Feedback</option>
+            <option value="Recruitment Meeting">Recruitment Meeting</option>
+            <option value="Offer">Offer</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Action date *</label>
+          <input
+            type="date"
+            value={actionForm.action_date}
+            onChange={(e) =>
+              setActionForm({
+                ...actionForm,
+                action_date: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="field">
+          <label>Next contact date</label>
+          <input
+            type="date"
+            value={actionForm.next_contact_date}
+            onChange={(e) =>
+              setActionForm({
+                ...actionForm,
+                next_contact_date: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="field">
+          <label>Next action</label>
+          <input
+            value={actionForm.next_contact_action}
+            onChange={(e) =>
+              setActionForm({
+                ...actionForm,
+                next_contact_action: e.target.value,
+              })
+            }
+            placeholder="e.g. Watch next league fixture"
+          />
+        </div>
+      </div>
+
+      <div className="field" style={{ marginTop: 20 }}>
+        <label>Notes</label>
+        <textarea
+          value={actionForm.notes}
+          onChange={(e) =>
+            setActionForm({
+              ...actionForm,
+              notes: e.target.value,
+            })
+          }
+          placeholder="Add recruitment notes..."
+          rows={5}
+        />
+      </div>
+
+      <div className="actions">
+        <button
+          className="btn secondary"
+          onClick={() => setActionOpen(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn primary"
+          onClick={saveRecruitmentAction}
+        >
+          Save action
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </>
   )
 }
