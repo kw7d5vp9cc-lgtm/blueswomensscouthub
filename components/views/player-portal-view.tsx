@@ -21,7 +21,8 @@ export function PlayerPortalView({ query }: { query: string }) {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
 const [playerReports, setPlayerReports] = useState<any[]>([])
 const [reportsLoading, setReportsLoading] = useState(false)
-
+const [selectedReport, setSelectedReport] = useState<any | null>(null)
+  
 async function load() {
     try {
       const data = await getPlayers()
@@ -446,7 +447,12 @@ async function openPlayerProfile(player: Player) {
               : report.report_assessments
 
             return (
-              <tr key={report.id}>
+              <tr
+  key={report.id}
+  onClick={() => setSelectedReport(report)}
+  style={{ cursor: 'pointer' }}
+  title="Open full scouting report"
+>
                 <td>
                   {report.fixtures?.fixture_date ||
                     report.submitted_at?.slice(0, 10) ||
@@ -485,6 +491,120 @@ async function openPlayerProfile(player: Player) {
     </div>
   )}
 </div>
+          </div>
+        </div>
+      )}
+         {selectedReport && (
+        <div className="overlay">
+          <div className="modal">
+            <div className="panelhead">
+              <div>
+                <h2>Scouting report</h2>
+                <span className="muted">
+                  {selectedReport.fixtures
+                    ? `${selectedReport.fixtures.home_team} v ${selectedReport.fixtures.away_team}`
+                    : 'Individual scouting report'}
+                </span>
+              </div>
+
+              <button
+                className="btn secondary"
+                onClick={() => setSelectedReport(null)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid3" style={{ marginTop: 20 }}>
+              <div className="stat">
+                <span className="muted">Date</span>
+                <strong>
+                  {selectedReport.fixtures?.fixture_date ||
+                    selectedReport.submitted_at?.slice(0, 10) ||
+                    '—'}
+                </strong>
+              </div>
+
+              <div className="stat">
+                <span className="muted">Scout</span>
+                <strong>{selectedReport.profiles?.full_name || '—'}</strong>
+              </div>
+
+              <div className="stat">
+                <span className="muted">Overall score</span>
+                <strong>{selectedReport.score || '—'}</strong>
+              </div>
+            </div>
+
+            {(() => {
+              const assessment = Array.isArray(
+                selectedReport.report_assessments
+              )
+                ? selectedReport.report_assessments[0]
+                : selectedReport.report_assessments
+
+              return (
+                <>
+                  <div className="grid grid2" style={{ marginTop: 20 }}>
+                    <div className="stat">
+                      <span className="muted">Technical</span>
+                      <strong>{assessment?.technical_score || '—'}</strong>
+                    </div>
+
+                    <div className="stat">
+                      <span className="muted">Tactical</span>
+                      <strong>{assessment?.tactical_score || '—'}</strong>
+                    </div>
+
+                    <div className="stat">
+                      <span className="muted">Physical</span>
+                      <strong>{assessment?.physical_score || '—'}</strong>
+                    </div>
+
+                    <div className="stat">
+                      <span className="muted">Mentality</span>
+                      <strong>{assessment?.mentality_score || '—'}</strong>
+                    </div>
+                  </div>
+
+                  <div className="panel" style={{ marginTop: 20 }}>
+                    <div className="panelhead">
+                      <h2>Did the player show something special?</h2>
+                    </div>
+
+                    <span className="badge">
+                      {assessment?.showed_something_special === true
+                        ? 'Yes'
+                        : assessment?.showed_something_special === false
+                          ? 'No'
+                          : '—'}
+                    </span>
+                  </div>
+
+                  <div className="panel" style={{ marginTop: 20 }}>
+                    <div className="panelhead">
+                      <h2>Strengths & supporting evidence</h2>
+                    </div>
+
+                    <p>
+                      {assessment?.strengths ||
+                        'No strengths or supporting evidence recorded.'}
+                    </p>
+                  </div>
+
+                  <div className="panel" style={{ marginTop: 20 }}>
+                    <div className="panelhead">
+                      <h2>Development areas</h2>
+                    </div>
+
+                    <p>
+                      {assessment?.development_areas ||
+                        'No development areas recorded.'}
+                    </p>
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </div>
       )}
