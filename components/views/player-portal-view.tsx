@@ -6,14 +6,17 @@ import { supabase } from '@/lib/supabase/client'
 import type { Player } from '@/lib/types'
 
 const emptyForm = {
-  full_name: '',
+    full_name: '',
   date_of_birth: '',
   position: '',
   preferred_foot: '',
+  club_id: '',
+}
 }
 
 export function PlayerPortalView({ query }: { query: string }) {
   const [players, setPlayers] = useState<Player[]>([])
+  const [clubs, setClubs] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
@@ -39,9 +42,24 @@ async function load() {
       setError(e.message)
     }
   }
+async function loadClubs() {
+  if (!supabase) return
 
+  const { data, error } = await supabase
+    .from('clubs')
+    .select('id, name')
+    .order('name', { ascending: true })
+
+  if (error) {
+    setError(error.message)
+    return
+  }
+
+  setClubs(data || [])
+}
   useEffect(() => {
   load()
+  loadClubs()
 }, [])
 
 async function loadPlayerReports(playerId: string) {
@@ -279,12 +297,13 @@ async function updateRecruitmentStatus(status: string) {
 
     const { error: insertError } = await supabase
       .from('players')
-      .insert({
-        full_name: normalizedName,
-        date_of_birth: form.date_of_birth,
-        position: form.position || null,
-        preferred_foot: form.preferred_foot || null,
-      })
+     .insert({
+  full_name: normalizedName,
+  date_of_birth: form.date_of_birth,
+  position: form.position || null,
+  preferred_foot: form.preferred_foot || null,
+  club_id: form.club_id || null,
+})
 
     if (insertError) {
       setError(insertError.message)
@@ -468,6 +487,27 @@ async function updateRecruitmentStatus(status: string) {
                   <option value="Both">Both</option>
                 </select>
               </div>
+              <div className="field">
+  <label>Current club</label>
+
+  <select
+    value={form.club_id}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        club_id: e.target.value,
+      })
+    }
+  >
+    <option value="">Select club...</option>
+
+    {clubs.map((club) => (
+      <option key={club.id} value={club.id}>
+        {club.name}
+      </option>
+    ))}
+  </select>
+</div>
             </div>
 
             <div className="actions">
