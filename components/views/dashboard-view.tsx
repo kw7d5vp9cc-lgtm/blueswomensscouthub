@@ -11,6 +11,7 @@ export function DashboardView({
 }) {
   const [upcomingActions, setUpcomingActions] = useState<any[]>([])
   const [actionsLoading, setActionsLoading] = useState(true)
+  const today = new Date().toISOString().slice(0, 10)
 useEffect(() => {
   async function loadUpcomingActions() {
     if (!supabase) {
@@ -18,7 +19,6 @@ useEffect(() => {
       return
     }
 
-    const today = new Date().toISOString().slice(0, 10)
 
     const { data, error } = await supabase
       .from('recruitment_actions')
@@ -36,8 +36,8 @@ useEffect(() => {
           full_name
         )
       `)
+      .eq('completed', false)
       .not('next_contact_date', 'is', null)
-      .gte('next_contact_date', today)
       .order('next_contact_date', { ascending: true })
       .limit(10)
 
@@ -53,6 +53,17 @@ useEffect(() => {
 
   loadUpcomingActions()
 }, [])
+  const overdueActions = upcomingActions.filter(
+  (action) => action.next_contact_date < today
+)
+
+const todayActions = upcomingActions.filter(
+  (action) => action.next_contact_date === today
+)
+
+const futureActions = upcomingActions.filter(
+  (action) => action.next_contact_date > today
+)
   return (
     <div className="grid grid2">
       <div className="panel">
@@ -115,13 +126,15 @@ useEffect(() => {
 <div className="panel">
   <div className="panelhead">
     <div>
-      <h2>Upcoming recruitment actions</h2>
+      <h2>Recruitment actions</h2>
       <span className="muted">
-        Next recruitment follow-ups
+        Outstanding recruitment follow-ups
       </span>
     </div>
 
-    <span className="badge">{upcomingActions.length} upcoming</span>
+    <span className="badge">
+      {upcomingActions.length} open
+    </span>
   </div>
 
   {actionsLoading && (
@@ -129,51 +142,83 @@ useEffect(() => {
   )}
 
   {!actionsLoading && upcomingActions.length === 0 && (
-    <p className="muted">No upcoming recruitment actions.</p>
+    <p className="muted">No outstanding recruitment actions.</p>
   )}
 
   {!actionsLoading && upcomingActions.length > 0 && (
-    <div style={{ overflowX: 'auto' }}>
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Player</th>
-            <th>Next action</th>
-            <th>Status</th>
-            <th>Created by</th>
-          </tr>
-        </thead>
+    <>
+      <div className="grid grid3" style={{ marginTop: 20 }}>
+        <div className="stat">
+          <strong>{overdueActions.length}</strong>
+          <span className="muted">Overdue</span>
+        </div>
 
-        <tbody>
-          {upcomingActions.map((action) => (
-            <tr key={action.id}>
-              <td>
-                <strong>{action.next_contact_date}</strong>
-              </td>
+        <div className="stat">
+          <strong>{todayActions.length}</strong>
+          <span className="muted">Today</span>
+        </div>
 
-              <td>{action.players?.full_name || '—'}</td>
+        <div className="stat">
+          <strong>{futureActions.length}</strong>
+          <span className="muted">Upcoming</span>
+        </div>
+      </div>
 
-              <td>
-                {action.next_contact_action ||
-                  action.action_type ||
-                  '—'}
-              </td>
-
-              <td>
-                <span className="badge">
-                  {action.players?.recruitment_status || '—'}
-                </span>
-              </td>
-
-              <td>{action.profiles?.full_name || '—'}</td>
+      <div style={{ overflowX: 'auto', marginTop: 20 }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Due</th>
+              <th>Player</th>
+              <th>Next action</th>
+              <th>Timing</th>
+              <th>Status</th>
+              <th>Created by</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+
+          <tbody>
+            {upcomingActions.map((action) => {
+              const timing =
+                action.next_contact_date < today
+                  ? 'Overdue'
+                  : action.next_contact_date === today
+                    ? 'Today'
+                    : 'Upcoming'
+
+              return (
+                <tr key={action.id}>
+                  <td>
+                    <strong>{action.next_contact_date}</strong>
+                  </td>
+
+                  <td>{action.players?.full_name || '—'}</td>
+
+                  <td>
+                    {action.next_contact_action ||
+                      action.action_type ||
+                      '—'}
+                  </td>
+
+                  <td>
+                    <span className="badge">{timing}</span>
+                  </td>
+
+                  <td>
+                    <span className="badge">
+                      {action.players?.recruitment_status || '—'}
+                    </span>
+                  </td>
+
+                  <td>{action.profiles?.full_name || '—'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   )}
-</div> 
-    </div>
-  )
+</div>
+      )
 }
