@@ -1151,22 +1151,7 @@ setEditClubDropdownOpen(false)
     )}
   </div>
 </div>
-            onChange={(e) =>
-              setEditPlayerForm({
-                ...editPlayerForm,
-                club_id: e.target.value,
-              })
-            }
-          >
-            <option value="">No club selected</option>
-
-            {clubs.map((club: any) => (
-              <option key={club.id} value={club.id}>
-                {club.name}
-              </option>
-            ))}
-          </select>
-        </div>
+          
       </div>
 
       <div className="actions" style={{ marginTop: 20 }}>
