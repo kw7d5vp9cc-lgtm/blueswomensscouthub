@@ -148,7 +148,7 @@ export function ScoutingHub() {
             placeholder="Search players, clubs, fixtures..."
           />
     <img
-  src="/chelsea-badge.png"
+  src="/chelsea.a22ea19b.png"
   alt="Chelsea FC"
   style={{
     width: 64,
