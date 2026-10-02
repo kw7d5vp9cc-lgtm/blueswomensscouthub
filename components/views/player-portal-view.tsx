@@ -56,10 +56,6 @@ async function loadClubs() {
     return
   }
 
-    const filteredClubs = clubs.filter((club) =>
-  club.name.toLowerCase().includes(clubSearch.toLowerCase())
-)
-
     setClubs(data || [])
 }
 
@@ -67,7 +63,9 @@ async function loadClubs() {
   load()
   loadClubs()
 }, [])
-
+const filteredClubs = clubs.filter((club: any) =>
+  club.name.toLowerCase().includes(clubSearch.toLowerCase())
+)
 async function loadPlayerReports(playerId: string) {
   if (!supabase) return
 
@@ -587,7 +585,7 @@ async function updateRecruitmentStatus(status: string) {
               <button
                 className="btn secondary"
                 onClick={() => {
-                  ssetOpen(false)
+                  setOpen(false)
 setForm(emptyForm)
 setClubSearch('')
 setClubDropdownOpen(false)
