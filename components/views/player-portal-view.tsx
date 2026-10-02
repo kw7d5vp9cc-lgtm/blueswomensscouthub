@@ -764,6 +764,7 @@ async function updateRecruitmentStatus(status: string) {
   )}
 </div>
           </div>
+              </div>
            )}
      
               {selectedReport && (
