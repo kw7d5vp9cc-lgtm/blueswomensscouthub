@@ -131,14 +131,34 @@ export function ScoutingHub() {
 
       <section className="main">
         <header className="top">
-          <h1>{active}</h1>
+  <h1>{active}</h1>
 
-          <input
+  <div
+    style={{
+      marginLeft: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 20,
+    }}
+  >
+    <input
             className="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search players, clubs, fixtures..."
           />
+    <img
+  src="/chelsea-badge.png"
+  alt="Chelsea FC"
+  style={{
+    width: 64,
+    height: 64,
+    objectFit: 'contain',
+    flexShrink: 0,
+  }}
+/>
+
+</div>
         </header>
 
         <main className="content">
