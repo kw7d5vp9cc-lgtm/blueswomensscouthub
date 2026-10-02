@@ -18,7 +18,7 @@ export function PlayerPortalView({ query }: { query: string }) {
   const [form, setForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   async function load() {
     try {
       const data = await getPlayers()
@@ -155,9 +155,22 @@ export function PlayerPortalView({ query }: { query: string }) {
               {rows.map((player) => (
                 <tr key={player.id}>
                   <td>
-                    <strong>{player.full_name}</strong>
-                  </td>
-
+  <button
+    type="button"
+    onClick={() => setSelectedPlayer(player)}
+    style={{
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      fontWeight: 700,
+      color: '#034694',
+      textDecoration: 'underline',
+    }}
+  >
+    {player.full_name}
+  </button>
+</td>
                   <td>{player.date_of_birth || '—'}</td>
                   <td>{player.position || '—'}</td>
                   <td>{player.preferred_foot || '—'}</td>
@@ -274,6 +287,72 @@ export function PlayerPortalView({ query }: { query: string }) {
               >
                 Create player
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+          {selectedPlayer && (
+        <div className="overlay">
+          <div className="modal">
+            <div className="panelhead">
+              <div>
+                <h2>{selectedPlayer.full_name}</h2>
+                <span className="muted">Player profile</span>
+              </div>
+
+              <button
+                className="btn secondary"
+                onClick={() => setSelectedPlayer(null)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid3">
+              <div className="stat">
+                <span className="muted">Position</span>
+                <strong>{selectedPlayer.position || '—'}</strong>
+              </div>
+
+              <div className="stat">
+                <span className="muted">Date of birth</span>
+                <strong>{selectedPlayer.date_of_birth || '—'}</strong>
+              </div>
+
+              <div className="stat">
+                <span className="muted">Preferred foot</span>
+                <strong>{selectedPlayer.preferred_foot || '—'}</strong>
+              </div>
+            </div>
+
+            <div
+              className="grid grid3"
+              style={{ marginTop: 20 }}
+            >
+              <div className="stat">
+                <span className="muted">Average score</span>
+                <strong>{selectedPlayer.average_score ?? '—'}</strong>
+              </div>
+
+              <div className="stat">
+                <span className="muted">Reports</span>
+                <strong>{selectedPlayer.report_count}</strong>
+              </div>
+
+              <div className="stat">
+                <span className="muted">Highest score</span>
+                <strong>{selectedPlayer.highest_score ?? '—'}</strong>
+              </div>
+            </div>
+
+            <div className="panel" style={{ marginTop: 20 }}>
+              <div className="panelhead">
+                <h2>Recruitment status</h2>
+              </div>
+
+              <span className="badge">
+                {selectedPlayer.recruitment_status}
+              </span>
             </div>
           </div>
         </div>
