@@ -100,7 +100,7 @@ async function loadRecruitmentActions(playerId: string) {
       notes,
       next_contact_date,
       next_contact_action,
-      completed
+      completed,
       created_at,
       created_by,
       profiles!recruitment_actions_created_by_fkey (
