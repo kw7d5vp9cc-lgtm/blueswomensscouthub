@@ -559,11 +559,17 @@ async function updateRecruitmentStatus(status: string) {
                 <strong>{selectedPlayer.date_of_birth || '—'}</strong>
               </div>
 
-              <div className="stat">
-                <span className="muted">Preferred foot</span>
-                <strong>{selectedPlayer.preferred_foot || '—'}</strong>
-              </div>
-            </div>
+             <div className="stat">
+  <span className="muted">Preferred foot</span>
+  <strong>{selectedPlayer.preferred_foot || '—'}</strong>
+</div>
+
+<div className="stat">
+  <span className="muted">Current club</span>
+  <strong>
+    {(selectedPlayer as any).clubs?.name || '—'}
+  </strong>
+</div>
 
             <div
               className="grid grid3"
