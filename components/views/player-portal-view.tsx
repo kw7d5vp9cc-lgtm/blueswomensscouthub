@@ -18,7 +18,12 @@ export function PlayerPortalView({ query }: { query: string }) {
   const [clubs, setClubs] = useState<any[]>([])
   const [clubSearch, setClubSearch] = useState('')
   const [clubDropdownOpen, setClubDropdownOpen] = useState(false)
-
+const [newClubOpen, setNewClubOpen] = useState(false)
+const [newClubForm, setNewClubForm] = useState({
+  name: '',
+  country: 'England',
+  club_type: '',
+})
   const [editPlayerOpen, setEditPlayerOpen] = useState(false)
     const [editClubSearch, setEditClubSearch] = useState('')
 const [editClubDropdownOpen, setEditClubDropdownOpen] = useState(false)
@@ -82,14 +87,23 @@ const filteredClubs = clubs.filter((club: any) =>
     async function addNewClub() {
   if (!supabase) return
 
-  const clubName = clubSearch.trim()
+  const clubName = newClubForm.name.trim()
 
-  if (!clubName) return
+  if (!clubName) {
+    setError('Club name is required.')
+    return
+  }
+
+  if (!newClubForm.club_type) {
+    setError('Please select a club type.')
+    return
+  }
 
   setError('')
 
   const existingClub = clubs.find(
-    (club: any) => club.name.toLowerCase() === clubName.toLowerCase()
+    (club: any) =>
+      club.name.toLowerCase() === clubName.toLowerCase()
   )
 
   if (existingClub) {
@@ -97,8 +111,9 @@ const filteredClubs = clubs.filter((club: any) =>
       ...form,
       club_id: existingClub.id,
     })
+
     setClubSearch(existingClub.name)
-    setClubDropdownOpen(false)
+    setNewClubOpen(false)
     return
   }
 
@@ -106,7 +121,8 @@ const filteredClubs = clubs.filter((club: any) =>
     .from('clubs')
     .insert({
       name: clubName,
-      club_type: 'Grassroots / Other',
+      country: newClubForm.country || null,
+      club_type: newClubForm.club_type,
       active: true,
     })
     .select('id, name')
@@ -118,7 +134,9 @@ const filteredClubs = clubs.filter((club: any) =>
   }
 
   setClubs((current) =>
-    [...current, data].sort((a, b) => a.name.localeCompare(b.name))
+    [...current, data].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )
   )
 
   setForm({
@@ -127,9 +145,10 @@ const filteredClubs = clubs.filter((club: any) =>
   })
 
   setClubSearch(data.name)
+  setNewClubOpen(false)
   setClubDropdownOpen(false)
+  setMessage(`Club "${data.name}" added successfully.`)
 }
-
     async function saveEditedPlayer() {
   if (!supabase || !selectedPlayer) return
 
@@ -662,7 +681,15 @@ async function updateRecruitmentStatus(status: string) {
         type="button"
         className="btn secondary"
         style={{ width: '100%' }}
-        onClick={addNewClub}
+        onClick={() => {
+  setNewClubForm({
+    name: clubSearch.trim(),
+    country: 'England',
+    club_type: '',
+  })
+  setClubDropdownOpen(false)
+  setNewClubOpen(true)
+}}
       >
         + Add "{clubSearch.trim()}"
       </button>
@@ -986,6 +1013,114 @@ setEditClubDropdownOpen(false)
           </div>
               </div>
            )}
+        {newClubOpen && (
+  <div className="overlay">
+    <div className="modal">
+      <div className="panelhead">
+        <div>
+          <h2>Add new club</h2>
+          <span className="muted">
+            Add a club to the scouting database
+          </span>
+        </div>
+
+        <button
+          className="btn secondary"
+          onClick={() => setNewClubOpen(false)}
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="grid grid2">
+        <div className="field">
+          <label>Club name *</label>
+          <input
+            value={newClubForm.name}
+            onChange={(e) =>
+              setNewClubForm({
+                ...newClubForm,
+                name: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="field">
+          <label>Country</label>
+          <select
+            value={newClubForm.country}
+            onChange={(e) =>
+              setNewClubForm({
+                ...newClubForm,
+                country: e.target.value,
+              })
+            }
+          >
+            <option value="England">England</option>
+            <option value="Scotland">Scotland</option>
+            <option value="Wales">Wales</option>
+            <option value="Northern Ireland">Northern Ireland</option>
+            <option value="Spain">Spain</option>
+            <option value="France">France</option>
+            <option value="Germany">Germany</option>
+            <option value="Netherlands">Netherlands</option>
+            <option value="Portugal">Portugal</option>
+            <option value="Italy">Italy</option>
+            <option value="Republic of Ireland">Republic of Ireland</option>
+            <option value="United States">United States</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label>Club type *</label>
+          <select
+            value={newClubForm.club_type}
+            onChange={(e) =>
+              setNewClubForm({
+                ...newClubForm,
+                club_type: e.target.value,
+              })
+            }
+          >
+            <option value="">Select club type...</option>
+            <option value="Professional Club">Professional Club</option>
+            <option value="Academy">Academy</option>
+            <option value="Grassroots">Grassroots</option>
+            <option value="ETC">ETC</option>
+            <option value="Development Centre">Development Centre</option>
+            <option value="Representative Team">Representative Team</option>
+            <option value="School">School</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <p style={{ marginTop: 16 }}>
+          {error}
+        </p>
+      )}
+
+      <div className="actions" style={{ marginTop: 20 }}>
+        <button
+          className="btn secondary"
+          onClick={() => setNewClubOpen(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="btn primary"
+          onClick={addNewClub}
+        >
+          Save & select club
+        </button>
+      </div>
+    </div>
+  </div>
+)}
      {editPlayerOpen && selectedPlayer && (
   <div className="overlay">
     <div className="modal">
