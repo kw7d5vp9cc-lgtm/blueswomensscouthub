@@ -74,18 +74,20 @@ export function ScoutingPortalView() {
       Math.max(...numericScores),
     ) as Score
 
-    await supabase
-      .from('players')
-      .update({
-        latest_score: latestScore,
-        average_score: Number(averageScore.toFixed(2)),
-        report_count: numericScores.length,
-        highest_score: highestScore,
-        last_watched_at: new Date().toISOString(),
-      })
-      .eq('id', playerId)
-  }
+    const { error: updateError } = await supabase
+  .from('players')
+  .update({
+    latest_score: latestScore,
+    average_score: Number(averageScore.toFixed(2)),
+    report_count: numericScores.length,
+    highest_score: highestScore,
+    last_watched_at: new Date().toISOString(),
+  })
+  .eq('id', playerId)
 
+if (updateError) {
+  throw updateError
+}
   async function submit() {
     setMessage('')
 
