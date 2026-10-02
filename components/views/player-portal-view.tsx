@@ -12,7 +12,6 @@ const emptyForm = {
   preferred_foot: '',
   club_id: '',
 }
-}
 
 export function PlayerPortalView({ query }: { query: string }) {
   const [players, setPlayers] = useState<Player[]>([])
