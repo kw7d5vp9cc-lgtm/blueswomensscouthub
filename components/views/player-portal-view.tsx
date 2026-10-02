@@ -16,6 +16,8 @@ const emptyForm = {
 export function PlayerPortalView({ query }: { query: string }) {
   const [players, setPlayers] = useState<Player[]>([])
   const [clubs, setClubs] = useState<any[]>([])
+    const [clubSearch, setClubSearch] = useState('')
+const [clubDropdownOpen, setClubDropdownOpen] = useState(false)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
@@ -54,9 +56,14 @@ async function loadClubs() {
     return
   }
 
-  setClubs(data || [])
+    const filteredClubs = clubs.filter((club) =>
+  club.name.toLowerCase().includes(clubSearch.toLowerCase())
+)
+
+    setClubs(data || [])
 }
-  useEffect(() => {
+
+    useEffect(() => {
   load()
   loadClubs()
 }, [])
@@ -333,10 +340,13 @@ async function updateRecruitmentStatus(status: string) {
             <button
               className="btn primary"
               onClick={() => {
-                setError('')
-                setMessage('')
-                setOpen(true)
-              }}
+  setError('')
+  setMessage('')
+  setClubSearch('')
+  setClubDropdownOpen(false)
+  setForm(emptyForm)
+  setOpen(true)
+}}
             >
               + Add player
             </button>
@@ -486,26 +496,90 @@ async function updateRecruitmentStatus(status: string) {
                   <option value="Both">Both</option>
                 </select>
               </div>
-              <div className="field">
+             <div className="field">
   <label>Current club</label>
 
-  <select
-    value={form.club_id}
-    onChange={(e) =>
-      setForm({
-        ...form,
-        club_id: e.target.value,
-      })
-    }
-  >
-    <option value="">Select club...</option>
+  <div style={{ position: 'relative' }}>
+    <input
+      type="text"
+      placeholder="Search club..."
+      value={
+        form.club_id
+          ? clubs.find((club) => club.id === form.club_id)?.name || clubSearch
+          : clubSearch
+      }
+      onFocus={() => setClubDropdownOpen(true)}
+      onChange={(e) => {
+        setClubSearch(e.target.value)
+        setClubDropdownOpen(true)
 
-    {clubs.map((club) => (
-      <option key={club.id} value={club.id}>
-        {club.name}
-      </option>
-    ))}
-  </select>
+        const matchingClub = clubs.find(
+          (club) =>
+            club.name.toLowerCase() === e.target.value.toLowerCase()
+        )
+
+        setForm({
+          ...form,
+          club_id: matchingClub?.id || '',
+        })
+      }}
+    />
+
+    {clubDropdownOpen && (
+      <div
+        style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 20,
+          maxHeight: 240,
+          overflowY: 'auto',
+          background: '#fff',
+          border: '1px solid #d9dee7',
+          borderRadius: 8,
+          boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+        }}
+      >
+        {filteredClubs.length === 0 ? (
+          <div
+            style={{
+              padding: 12,
+              color: '#667085',
+            }}
+          >
+            No clubs found
+          </div>
+        ) : (
+          filteredClubs.map((club) => (
+            <button
+              key={club.id}
+              type="button"
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '10px 12px',
+                border: 0,
+                background: '#fff',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                setForm({
+                  ...form,
+                  club_id: club.id,
+                })
+                setClubSearch(club.name)
+                setClubDropdownOpen(false)
+              }}
+            >
+              {club.name}
+            </button>
+          ))
+        )}
+      </div>
+    )}
+  </div>
 </div>
             </div>
 
@@ -513,9 +587,11 @@ async function updateRecruitmentStatus(status: string) {
               <button
                 className="btn secondary"
                 onClick={() => {
-                  setOpen(false)
-                  setForm(emptyForm)
-                  setError('')
+                  ssetOpen(false)
+setForm(emptyForm)
+setClubSearch('')
+setClubDropdownOpen(false)
+setError('')
                 }}
               >
                 Cancel
