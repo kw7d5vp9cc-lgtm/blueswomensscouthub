@@ -100,6 +100,7 @@ async function loadRecruitmentActions(playerId: string) {
       notes,
       next_contact_date,
       next_contact_action,
+      completed
       created_at,
       created_by,
       profiles!recruitment_actions_created_by_fkey (
@@ -209,6 +210,27 @@ async function updateRecruitmentStatus(status: string) {
   setActionOpen(false)
   setMessage('Recruitment action added successfully.')
 
+  await loadRecruitmentActions(selectedPlayer.id)
+}
+  async function completeRecruitmentAction(actionId: string) {
+  if (!supabase || !selectedPlayer) return
+
+  setError('')
+  setMessage('')
+
+  const { error } = await supabase
+    .from('recruitment_actions')
+    .update({
+      completed: true,
+    })
+    .eq('id', actionId)
+
+  if (error) {
+    setError(error.message)
+    return
+  }
+
+  setMessage('Recruitment action completed successfully.')
   await loadRecruitmentActions(selectedPlayer.id)
 }
   const term = query.toLowerCase().trim()
@@ -580,6 +602,7 @@ async function updateRecruitmentStatus(status: string) {
             <th>Next contact</th>
             <th>Next action</th>
             <th>Created by</th>
+            <th>Status</th>
           </tr>
         </thead>
 
@@ -594,6 +617,18 @@ async function updateRecruitmentStatus(status: string) {
               <td>{action.next_contact_date || '—'}</td>
               <td>{action.next_contact_action || '—'}</td>
               <td>{action.profiles?.full_name || '—'}</td>
+              <td>
+  {action.completed ? (
+    <span className="badge">Complete</span>
+  ) : (
+    <button
+      className="btn secondary"
+      onClick={() => completeRecruitmentAction(action.id)}
+    >
+      Mark complete
+    </button>
+  )}
+</td>
             </tr>
           ))}
         </tbody>
