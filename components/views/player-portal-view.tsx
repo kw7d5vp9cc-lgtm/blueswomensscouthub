@@ -571,6 +571,8 @@ async function updateRecruitmentStatus(status: string) {
   </strong>
 </div>
 
+                </div>
+              
             <div
               className="grid grid3"
               style={{ marginTop: 20 }}
