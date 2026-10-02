@@ -20,6 +20,8 @@ export function PlayerPortalView({ query }: { query: string }) {
   const [clubDropdownOpen, setClubDropdownOpen] = useState(false)
 
   const [editPlayerOpen, setEditPlayerOpen] = useState(false)
+    const [editClubSearch, setEditClubSearch] = useState('')
+const [editClubDropdownOpen, setEditClubDropdownOpen] = useState(false)
   const [editPlayerForm, setEditPlayerForm] = useState({
     full_name: '',
     date_of_birth: '',
@@ -737,7 +739,10 @@ setError('')
     className="btn primary"
     onClick={() => {
       if (!selectedPlayer) return
-
+        
+setEditClubSearch((selectedPlayer as any).clubs?.name || '')
+setEditClubDropdownOpen(false)
+        
       setEditPlayerForm({
         full_name: selectedPlayer.full_name || '',
         date_of_birth: selectedPlayer.date_of_birth || '',
@@ -1067,10 +1072,85 @@ setError('')
           </select>
         </div>
 
-        <div className="field">
-          <label>Current club</label>
-          <select
-            value={editPlayerForm.club_id}
+       <div className="field">
+  <label>Current club</label>
+
+  <div style={{ position: 'relative' }}>
+    <input
+      type="text"
+      placeholder="Search club..."
+      value={editClubSearch}
+      onFocus={() => setEditClubDropdownOpen(true)}
+      onChange={(e) => {
+        const value = e.target.value
+
+        setEditClubSearch(value)
+        setEditClubDropdownOpen(true)
+
+        const matchingClub = clubs.find(
+          (club: any) =>
+            club.name.toLowerCase() === value.toLowerCase()
+        )
+
+        setEditPlayerForm({
+          ...editPlayerForm,
+          club_id: matchingClub?.id || '',
+        })
+      }}
+    />
+
+    {editClubDropdownOpen && (
+      <div
+        style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 30,
+          maxHeight: 240,
+          overflowY: 'auto',
+          background: '#fff',
+          border: '1px solid #d9dee7',
+          borderRadius: 8,
+          boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+        }}
+      >
+        {clubs
+          .filter((club: any) =>
+            club.name
+              .toLowerCase()
+              .includes(editClubSearch.toLowerCase())
+          )
+          .map((club: any) => (
+            <button
+              key={club.id}
+              type="button"
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '10px 12px',
+                border: 0,
+                background: '#fff',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                setEditPlayerForm({
+                  ...editPlayerForm,
+                  club_id: club.id,
+                })
+
+                setEditClubSearch(club.name)
+                setEditClubDropdownOpen(false)
+              }}
+            >
+              {club.name}
+            </button>
+          ))}
+      </div>
+    )}
+  </div>
+</div>
             onChange={(e) =>
               setEditPlayerForm({
                 ...editPlayerForm,
