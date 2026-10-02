@@ -764,9 +764,9 @@ async function updateRecruitmentStatus(status: string) {
   )}
 </div>
           </div>
-        </div>
-      )}
-         {selectedReport && (
+           )}
+     
+              {selectedReport && (
         <div className="overlay">
           <div className="modal">
             <div className="panelhead">
