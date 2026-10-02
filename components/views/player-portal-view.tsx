@@ -86,7 +86,39 @@ async function openPlayerProfile(player: Player) {
   setPlayerReports([])
   await loadPlayerReports(player.id)
 }
+async function updateRecruitmentStatus(status: string) {
+  if (!supabase || !selectedPlayer) return
 
+  setError('')
+  setMessage('')
+
+  const { error } = await supabase
+    .from('players')
+    .update({
+      recruitment_status: status,
+    })
+    .eq('id', selectedPlayer.id)
+
+  if (error) {
+    setError(error.message)
+    return
+  }
+
+  setSelectedPlayer({
+    ...selectedPlayer,
+    recruitment_status: status,
+  })
+
+  setPlayers((currentPlayers) =>
+    currentPlayers.map((player) =>
+      player.id === selectedPlayer.id
+        ? { ...player, recruitment_status: status }
+        : player
+    )
+  )
+
+  setMessage('Recruitment status updated successfully.')
+}
   const term = query.toLowerCase().trim()
 
   const rows = useMemo(
@@ -401,14 +433,31 @@ async function openPlayerProfile(player: Player) {
             </div>
 
             <div className="panel" style={{ marginTop: 20 }}>
-              <div className="panelhead">
-                <h2>Recruitment status</h2>
-              </div>
+  <div className="panelhead">
+    <h2>Recruitment status</h2>
+    <span className="badge">
+      {selectedPlayer.recruitment_status}
+    </span>
+  </div>
 
-              <span className="badge">
-                {selectedPlayer.recruitment_status}
-              </span>
-            </div>
+  <div className="field">
+    <label>Update recruitment status</label>
+
+    <select
+      value={selectedPlayer.recruitment_status}
+      onChange={(e) => updateRecruitmentStatus(e.target.value)}
+    >
+      <option value="identified">Identified</option>
+      <option value="monitor">Monitor</option>
+      <option value="active">Active</option>
+      <option value="contact">Contact</option>
+      <option value="trial">Trial</option>
+      <option value="offer">Offer</option>
+      <option value="signed">Signed</option>
+      <option value="closed">Closed</option>
+    </select>
+  </div>
+</div>
             <div className="panel" style={{ marginTop: 20 }}>
   <div className="panelhead">
     <h2>Scouting history</h2>
