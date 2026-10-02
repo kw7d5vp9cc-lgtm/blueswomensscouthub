@@ -74,7 +74,7 @@ export function ScoutingPortalView() {
       Math.max(...numericScores),
     ) as Score
 
-    const { error: updateError } = await supabase
+const { error: updateError } = await supabase
   .from('players')
   .update({
     latest_score: latestScore,
@@ -87,6 +87,7 @@ export function ScoutingPortalView() {
 
 if (updateError) {
   throw updateError
+}
 }
   async function submit() {
     setMessage('')
