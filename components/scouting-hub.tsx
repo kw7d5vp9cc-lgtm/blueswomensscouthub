@@ -79,9 +79,9 @@ export function ScoutingHub() {
     <div className="shell">
       <aside className="side">
         <div className="brand">
-          Chelsea Women
-          <small>Scouting Hub</small>
-        </div>
+  Chelsea FC Women
+  <small>ACADEMY SCOUTING HUB</small>
+</div>
 
         <div className="nav">
           {nav.map((item) => (
