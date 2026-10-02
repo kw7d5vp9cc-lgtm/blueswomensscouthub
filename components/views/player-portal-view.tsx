@@ -88,7 +88,36 @@ async function loadPlayerReports(playerId: string) {
 
   setReportsLoading(false)
 }
-async function openPlayerProfile(player: Player) {
+async function loadRecruitmentActions(playerId: string) {
+  if (!supabase) return
+
+  const { data, error } = await supabase
+    .from('recruitment_actions')
+    .select(`
+      id,
+      action_type,
+      action_date,
+      notes,
+      next_contact_date,
+      next_contact_action,
+      created_at,
+      created_by,
+      profiles!recruitment_actions_created_by_fkey (
+        full_name
+      )
+    `)
+    .eq('player_id', playerId)
+    .order('action_date', { ascending: false })
+
+  if (error) {
+    setError(error.message)
+    setRecruitmentActions([])
+    return
+  }
+
+  setRecruitmentActions(data || [])
+}
+  async function openPlayerProfile(player: Player) {
   setSelectedPlayer(player)
   setPlayerReports([])
   setRecruitmentActions([])
@@ -97,11 +126,6 @@ async function openPlayerProfile(player: Player) {
     loadPlayerReports(player.id),
     loadRecruitmentActions(player.id),
   ])
-}
-async function openPlayerProfile(player: Player) {
-  setSelectedPlayer(player)
-  setPlayerReports([])
-  await loadPlayerReports(player.id)
 }
 async function updateRecruitmentStatus(status: string) {
   if (!supabase || !selectedPlayer) return
