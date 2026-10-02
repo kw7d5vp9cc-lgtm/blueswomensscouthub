@@ -32,9 +32,10 @@ async function load() {
   }
 
   useEffect(() => {
-    load()
-  }
-  async function loadPlayerReports(playerId: string) {
+  load()
+}, [])
+
+async function loadPlayerReports(playerId: string) {
   if (!supabase) return
 
   setReportsLoading(true)
