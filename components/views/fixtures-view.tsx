@@ -97,6 +97,9 @@ function openEditFixture(fixture: Fixture) {
     notes: form.notes || null,
     status: form.status,
   }
+    console.log('Updating fixture:', editingFixture.id)
+console.log('Fixture status being saved:', form.status)
+console.log('Fixture payload:', payload)
 
   const { error } = await supabase
     .from('fixtures')
