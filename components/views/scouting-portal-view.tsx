@@ -252,7 +252,6 @@ if (updateError) {
     </select>
   </div>
 )
-  )
 
   return (
     <>
