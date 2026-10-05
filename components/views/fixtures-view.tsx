@@ -238,7 +238,6 @@ await load()
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Reference</th>
                 <th>Fixture</th>
                 <th>Time</th>
                 <th>Age</th>
@@ -255,14 +254,23 @@ await load()
                   <td>{fixture.fixture_date}</td>
 
                   <td>
-                    {fixture.fixture_reference || '—'}
-                  </td>
-
-                  <td>
-                    <strong>{fixture.home_team}</strong>
-                    {' v '}
-                    <strong>{fixture.away_team}</strong>
-                  </td>
+  <button
+    type="button"
+    onClick={() => openEditFixture(fixture)}
+    style={{
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      textAlign: 'left',
+      font: 'inherit',
+    }}
+  >
+    <strong>{fixture.home_team}</strong>
+    {' v '}
+    <strong>{fixture.away_team}</strong>
+  </button>
+</td>
 
                   <td>
                     {fixture.kick_off?.slice(0, 5) || '—'}
