@@ -588,17 +588,19 @@ await load()
           <label>Assign scout</label>
           <select
             value={form.allocated_scout}
-            onChange={(e) =>
-  setForm({
-    ...form,
-    allocated_scout: e.target.value,
-    status: e.target.value
-      ? form.status === 'attended'
+            onChange={(e) => {
+  const scoutId = e.target.value
+
+  setForm((currentForm) => ({
+    ...currentForm,
+    allocated_scout: scoutId,
+    status: scoutId
+      ? currentForm.status === 'attended'
         ? 'attended'
         : 'allocated'
       : 'available',
-  })
-}
+  }))
+}}
           >
             <option value="">Available / unassigned</option>
 
@@ -616,12 +618,14 @@ await load()
   <label>Fixture status</label>
   <select
     value={form.status}
-    onChange={(e) =>
-      setForm({
-        ...form,
-        status: e.target.value,
-      })
-    }
+    onChange={(e) => {
+  const newStatus = e.target.value
+
+  setForm((currentForm) => ({
+    ...currentForm,
+    status: newStatus,
+  }))
+}}
   >
     <option value="available">Available</option>
     <option value="allocated">Allocated</option>
