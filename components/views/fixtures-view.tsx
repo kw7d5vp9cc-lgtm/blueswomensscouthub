@@ -99,18 +99,11 @@ function openEditFixture(fixture: Fixture) {
     notes: form.notes || null,
     status: editStatus,
   }
-    console.log('Updating fixture:', editingFixture.id)
-console.log('Fixture status being saved:', editStatus)
-console.log('Fixture payload:', payload)
 
-  const { data, error } = await supabase
+const { error } = await supabase
   .from('fixtures')
   .update(payload)
   .eq('id', editingFixture.id)
-  .select()
-
-console.log('Supabase update result:', data)
-console.log('Supabase update error:', error)
 
   if (error) {
     setMessage(error.message)
