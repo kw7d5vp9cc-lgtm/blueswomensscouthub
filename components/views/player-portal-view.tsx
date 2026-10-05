@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { getPlayers } from '@/lib/data'
 import { supabase } from '@/lib/supabase/client'
 import type { Player } from '@/lib/types'
+import * as XLSX from 'xlsx'
 
 const emptyForm = {
     full_name: '',
@@ -394,7 +395,146 @@ async function updateRecruitmentStatus(status: string) {
       ),
     [players, term],
   )
+async function downloadPlayerExcel() {
+  if (!supabase) {
+    setError('Supabase is not configured.')
+    return
+  }
 
+  setError('')
+  setMessage('Preparing Excel export...')
+
+  try {
+    const { data: reportData, error: reportError } = await supabase
+      .from('reports')
+      .select(`
+        id,
+        player_id,
+        score,
+        submitted_at,
+        players (
+          full_name
+        ),
+        fixtures (
+          fixture_date,
+          home_team,
+          away_team
+        ),
+        profiles!reports_scout_id_fkey (
+          full_name
+        ),
+        report_assessments (
+          technical_score,
+          tactical_score,
+          physical_score,
+          mentality_score,
+          showed_something_special,
+          strengths,
+          development_areas
+        )
+      `)
+      .order('submitted_at', { ascending: false })
+
+    if (reportError) throw reportError
+
+    const { data: actionData, error: actionError } = await supabase
+      .from('recruitment_actions')
+      .select(`
+        id,
+        player_id,
+        action_type,
+        action_date,
+        notes,
+        next_contact_date,
+        next_contact_action,
+        completed,
+        players (
+          full_name
+        ),
+        profiles!recruitment_actions_created_by_fkey (
+          full_name
+        )
+      `)
+      .order('action_date', { ascending: false })
+
+    if (actionError) throw actionError
+
+    const playerRows = players.map((player: any) => ({
+      'Player Name': player.full_name || '',
+      'Date of Birth': player.date_of_birth || '',
+      'Position': player.position || '',
+      'Preferred Foot': player.preferred_foot || '',
+      'Current Club': player.clubs?.name || '',
+      'Average Score': player.average_score ?? '',
+      'Latest Score': player.latest_score ?? '',
+      'Highest Score': player.highest_score ?? '',
+      'Report Count': player.report_count ?? 0,
+      'Recruitment Status': player.recruitment_status || '',
+    }))
+
+    const reportRows = (reportData || []).map((report: any) => {
+      const assessment = Array.isArray(report.report_assessments)
+        ? report.report_assessments[0]
+        : report.report_assessments
+
+      return {
+        'Player Name': report.players?.full_name || '',
+        'Report Date': report.submitted_at?.slice(0, 10) || '',
+        'Fixture Date': report.fixtures?.fixture_date || '',
+        'Fixture': report.fixtures
+          ? `${report.fixtures.home_team} v ${report.fixtures.away_team}`
+          : '',
+        'Scout': report.profiles?.full_name || '',
+        'Overall Score': report.score ?? '',
+        'Technical': assessment?.technical_score ?? '',
+        'Tactical': assessment?.tactical_score ?? '',
+        'Physical': assessment?.physical_score ?? '',
+        'Mentality': assessment?.mentality_score ?? '',
+        'Something Special': assessment?.showed_something_special === true
+          ? 'Yes'
+          : assessment?.showed_something_special === false
+            ? 'No'
+            : '',
+        'Strengths / Evidence': assessment?.strengths || '',
+        'Development Areas': assessment?.development_areas || '',
+      }
+    })
+
+    const actionRows = (actionData || []).map((action: any) => ({
+      'Player Name': action.players?.full_name || '',
+      'Action Date': action.action_date || '',
+      'Action': action.action_type || '',
+      'Notes': action.notes || '',
+      'Next Contact Date': action.next_contact_date || '',
+      'Next Action': action.next_contact_action || '',
+      'Created By': action.profiles?.full_name || '',
+      'Status': action.completed ? 'Complete' : 'Open',
+    }))
+
+    const workbook = XLSX.utils.book_new()
+
+    const playersSheet = XLSX.utils.json_to_sheet(playerRows)
+    const reportsSheet = XLSX.utils.json_to_sheet(reportRows)
+    const actionsSheet = XLSX.utils.json_to_sheet(actionRows)
+
+    XLSX.utils.book_append_sheet(workbook, playersSheet, 'Players')
+    XLSX.utils.book_append_sheet(workbook, reportsSheet, 'Scouting Reports')
+    XLSX.utils.book_append_sheet(workbook, actionsSheet, 'Recruitment Actions')
+
+    const today = new Date().toISOString().slice(0, 10)
+
+    XLSX.writeFile(
+      workbook,
+      `Chelsea_Womens_Academy_Player_Export_${today}.xlsx`
+    )
+
+    setMessage('Excel export downloaded successfully.')
+  } catch (exportError: any) {
+    setError(exportError.message || 'Unable to create Excel export.')
+    setMessage('')
+  }
+}
+    
   async function savePlayer() {
     setMessage('')
     setError('')
@@ -460,7 +600,13 @@ async function updateRecruitmentStatus(status: string) {
             }}
           >
             <span className="badge">{rows.length} players</span>
-
+<button
+  className="btn secondary"
+  onClick={downloadPlayerExcel}
+>
+  ↓ Download Excel
+</button>
+              
             <button
               className="btn primary"
               onClick={() => {
