@@ -342,7 +342,6 @@ if (updateError) {
   setFixtureSearch(e.target.value)
   setShowFixtureResults(true)
 }}
-  style={{ marginBottom: 8 }}
 />
 {fixtureSearch.trim() && showFixtureResults && (
   <div
@@ -377,6 +376,7 @@ if (updateError) {
         style={{
           display: 'block',
           width: '100%',
+          minHeight: 62,
           padding: 12,
           border: 'none',
           borderBottom: '1px solid #eef1f5',
@@ -462,6 +462,7 @@ if (updateError) {
           style={{
             display: 'block',
             width: '100%',
+            minHeight: 62,
             padding: 12,
             border: 'none',
             borderBottom: '1px solid #eef1f5',
