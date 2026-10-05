@@ -92,28 +92,39 @@ if (form.allocated_scout) {
   )
 
   if (allocatedScout?.email) {
-    const { error: emailError } = await supabase.functions.invoke(
-      'send-fixture-allocation',
-      {
-        body: {
-          to: allocatedScout.email,
-          scout_name: allocatedScout.full_name,
-          home_team: form.home_team,
-          away_team: form.away_team,
-          fixture_date: form.fixture_date,
-          kick_off: form.kick_off || null,
-          venue: form.venue || null,
-          age_group: form.age_group || null,
-          competition: form.competition || null,
-        },
-      }
-    )
+    const {
+  data: { session },
+} = await supabase.auth.getSession()
 
-    if (!emailError) {
-      emailSent = true
-    } else {
-      console.error('Fixture email failed:', emailError)
+if (!session) {
+  console.error('Fixture email failed: no authenticated session')
+} else {
+  const { error: emailError } = await supabase.functions.invoke(
+    'send-fixture-allocation',
+    {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: {
+        to: allocatedScout.email,
+        scout_name: allocatedScout.full_name,
+        home_team: form.home_team,
+        away_team: form.away_team,
+        fixture_date: form.fixture_date,
+        kick_off: form.kick_off || null,
+        venue: form.venue || null,
+        age_group: form.age_group || null,
+        competition: form.competition || null,
+      },
     }
+  )
+
+  if (!emailError) {
+    emailSent = true
+  } else {
+    console.error('Fixture email failed:', emailError)
+  }
+}
   }
 }
 
