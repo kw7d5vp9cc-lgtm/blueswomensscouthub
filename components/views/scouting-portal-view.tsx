@@ -14,6 +14,7 @@ export function ScoutingPortalView() {
   const [players, setPlayers] = useState<Player[]>([])
   const [fixtures, setFixtures] = useState<Fixture[]>([])
 const [fixtureSearch, setFixtureSearch] = useState('')
+const [showFixtureResults, setShowFixtureResults] = useState(false)
   
   const [form, setForm] = useState({
     fixture_id: '',
@@ -313,32 +314,77 @@ if (updateError) {
   type="text"
   placeholder="Search team, date, age, competition or venue..."
   value={fixtureSearch}
-  onChange={(e) => setFixtureSearch(e.target.value)}
+  onChange={(e) => {
+  setFixtureSearch(e.target.value)
+  setShowFixtureResults(true)
+}}
   style={{ marginBottom: 8 }}
 />
-                <select
-                  value={form.fixture_id}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      fixture_id: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">No fixture selected</option>
+{fixtureSearch.trim() && showFixtureResults && (
+  <div
+    style={{
+      border: '1px solid #d9e0e8',
+      borderRadius: 10,
+      maxHeight: 240,
+      overflowY: 'auto',
+      background: '#fff',
+    }}
+  >
+    {filteredFixtures.length === 0 && (
+      <div style={{ padding: 12 }} className="muted">
+        No fixtures found
+      </div>
+    )}
 
-                  {filteredFixtures.map((fixture) => (
-                    <option
-                      key={fixture.id}
-                      value={fixture.id}
-                    >
-                      {fixture.fixture_reference ||
-                        fixture.fixture_date}{' '}
-                      · {fixture.home_team} v{' '}
-                      {fixture.away_team}
-                    </option>
-                  ))}
-                </select>
+    {filteredFixtures.slice(0, 20).map((fixture) => (
+      <button
+        key={fixture.id}
+        type="button"
+        onClick={() => {
+          setForm({
+            ...form,
+            fixture_id: fixture.id,
+          })
+          setFixtureSearch(
+            `${fixture.fixture_date} · ${fixture.home_team} v ${fixture.away_team}`
+          )
+          setShowFixtureResults(false)
+        }}
+        style={{
+          display: 'block',
+          width: '100%',
+          padding: 12,
+          border: 'none',
+          borderBottom: '1px solid #eef1f5',
+          background:
+            form.fixture_id === fixture.id ? '#f1f6fc' : '#fff',
+          textAlign: 'left',
+          cursor: 'pointer',
+        }}
+      >
+        <strong>
+          {fixture.home_team} v {fixture.away_team}
+        </strong>
+
+        <div
+          className="muted"
+          style={{ marginTop: 4, fontSize: 12 }}
+        >
+          {fixture.fixture_date}
+          {fixture.kick_off
+            ? ` · ${fixture.kick_off.slice(0, 5)}`
+            : ''}
+          {fixture.age_group
+            ? ` · ${fixture.age_group}`
+            : ''}
+          {fixture.competition
+            ? ` · ${fixture.competition}`
+            : ''}
+        </div>
+      </button>
+    ))}
+  </div>
+)}
               </div>
 
               <div className="field">
