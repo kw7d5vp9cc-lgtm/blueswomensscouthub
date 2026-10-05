@@ -13,7 +13,8 @@ export function ScoutingPortalView() {
 
   const [players, setPlayers] = useState<Player[]>([])
   const [fixtures, setFixtures] = useState<Fixture[]>([])
-
+const [fixtureSearch, setFixtureSearch] = useState('')
+  
   const [form, setForm] = useState({
     fixture_id: '',
     player_id: '',
@@ -44,7 +45,30 @@ export function ScoutingPortalView() {
   useEffect(() => {
     load()
   }, [])
+const filteredFixtures = fixtures
+  .filter((fixture) => {
+    const search = fixtureSearch.toLowerCase().trim()
 
+    if (!search) return true
+
+    return [
+      fixture.home_team,
+      fixture.away_team,
+      fixture.fixture_date,
+      fixture.age_group,
+      fixture.competition,
+      fixture.venue,
+      fixture.fixture_reference,
+    ]
+      .filter(Boolean)
+      .some((value) =>
+        String(value).toLowerCase().includes(search)
+      )
+  })
+  .sort((a, b) =>
+    (b.fixture_date || '').localeCompare(a.fixture_date || '')
+  )
+  
   async function updatePlayerSummary(playerId: string) {
     if (!supabase) return
 
@@ -239,9 +263,10 @@ if (updateError) {
               marginTop: 18,
             }}
             onClick={() => {
-              setMessage('')
-              setOpen(true)
-            }}
+  setMessage('')
+  setFixtureSearch('')
+  setOpen(true)
+}}
           >
             + Add report
           </button>
@@ -284,7 +309,13 @@ if (updateError) {
             <div className="formgrid">
               <div className="field">
                 <label>Fixture</label>
-
+<input
+  type="text"
+  placeholder="Search team, date, age, competition or venue..."
+  value={fixtureSearch}
+  onChange={(e) => setFixtureSearch(e.target.value)}
+  style={{ marginBottom: 8 }}
+/>
                 <select
                   value={form.fixture_id}
                   onChange={(e) =>
@@ -296,7 +327,7 @@ if (updateError) {
                 >
                   <option value="">No fixture selected</option>
 
-                  {fixtures.map((fixture) => (
+                  {filteredFixtures.map((fixture) => (
                     <option
                       key={fixture.id}
                       value={fixture.id}
