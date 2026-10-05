@@ -240,12 +240,13 @@ await load()
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Fixture</th>
-                <th>Time</th>
-                <th>Age</th>
-                <th>Venue</th>
-                <th>Competition</th>
-                <th>Scout</th>
+<th>Fixture</th>
+<th>Time</th>
+<th>Age</th>
+<th>Venue</th>
+<th>Competition</th>
+<th>Scout</th>
+<th>Status</th>
 <th>Actions</th>
               </tr>
             </thead>
@@ -285,12 +286,14 @@ await load()
                   <td>{fixture.competition || '—'}</td>
 
                   <td>
-                    {fixture.profiles?.full_name || (
-                      <span className="badge">
-                        {fixture.status}
-                      </span>
-                    )}
-                  </td>
+  {fixture.profiles?.full_name || '—'}
+</td>
+
+<td>
+  <span className="badge">
+    {fixture.status}
+  </span>
+</td>
                   <td>
   <button
     className="btn"
