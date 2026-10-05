@@ -16,6 +16,7 @@ const emptyForm = {
  fixture_reference: '',
 allocated_scout: '',
 notes: '',
+  status: 'available',
 }
 
 export function FixturesView({ query }: { query: string }) {
@@ -69,6 +70,7 @@ function openEditFixture(fixture: Fixture) {
     fixture_reference: fixture.fixture_reference || '',
     allocated_scout: fixture.allocated_scout || '',
     notes: fixture.notes || '',
+    status: fixture.status || 'available',
   })
 
   setEditOpen(true)
@@ -93,7 +95,7 @@ function openEditFixture(fixture: Fixture) {
     fixture_reference: form.fixture_reference || null,
     allocated_scout: form.allocated_scout || null,
     notes: form.notes || null,
-    status: form.allocated_scout ? 'allocated' : 'available',
+    status: form.status,
   }
 
   const { error } = await supabase
@@ -581,11 +583,16 @@ await load()
           <select
             value={form.allocated_scout}
             onChange={(e) =>
-              setForm({
-                ...form,
-                allocated_scout: e.target.value,
-              })
-            }
+  setForm({
+    ...form,
+    allocated_scout: e.target.value,
+    status: e.target.value
+      ? form.status === 'attended'
+        ? 'attended'
+        : 'allocated'
+      : 'available',
+  })
+}
           >
             <option value="">Available / unassigned</option>
 
@@ -599,7 +606,22 @@ await load()
             ))}
           </select>
         </div>
-
+<div className="field full">
+  <label>Fixture status</label>
+  <select
+    value={form.status}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        status: e.target.value,
+      })
+    }
+  >
+    <option value="available">Available</option>
+    <option value="allocated">Allocated</option>
+    <option value="attended">Attended</option>
+  </select>
+</div>
         <div className="field full">
           <label>Fixture notes / details</label>
           <textarea
