@@ -50,4 +50,5 @@ export type Fixture = {
   status: string
   fixture_reference: string | null
   profiles?: Pick<Profile, 'id' | 'full_name'> | null
+  notes?: string | null
 }
