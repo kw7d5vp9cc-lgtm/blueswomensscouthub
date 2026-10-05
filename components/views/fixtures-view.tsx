@@ -591,12 +591,16 @@ await load()
 
   <select
     value={form.allocated_scout}
-    onChange={(e) =>
-      setForm((currentForm) => ({
-        ...currentForm,
-        allocated_scout: e.target.value,
-      }))
-    }
+    onChange={(e) => {
+  const scoutId = e.target.value
+
+  setForm((currentForm) => ({
+    ...currentForm,
+    allocated_scout: scoutId,
+  }))
+
+  setEditStatus(scoutId ? 'allocated' : 'available')
+}}
   >
     <option value="">Available / unassigned</option>
 
