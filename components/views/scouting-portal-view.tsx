@@ -15,6 +15,8 @@ export function ScoutingPortalView() {
   const [fixtures, setFixtures] = useState<Fixture[]>([])
 const [fixtureSearch, setFixtureSearch] = useState('')
 const [showFixtureResults, setShowFixtureResults] = useState(false)
+  const [playerSearch, setPlayerSearch] = useState('')
+const [showPlayerResults, setShowPlayerResults] = useState(false)
   
   const [form, setForm] = useState({
     fixture_id: '',
@@ -69,7 +71,26 @@ const filteredFixtures = fixtures
   .sort((a, b) =>
     (b.fixture_date || '').localeCompare(a.fixture_date || '')
   )
-  
+  const filteredPlayers = players
+  .filter((player) => {
+    const search = playerSearch.toLowerCase().trim()
+
+    if (!search) return true
+
+    return [
+      player.full_name,
+      player.date_of_birth,
+      player.position,
+      player.clubs?.name,
+    ]
+      .filter(Boolean)
+      .some((value) =>
+        String(value).toLowerCase().includes(search)
+      )
+  })
+  .sort((a, b) =>
+    (a.full_name || '').localeCompare(b.full_name || '')
+  )
   async function updatePlayerSummary(playerId: string) {
     if (!supabase) return
 
@@ -200,36 +221,37 @@ if (updateError) {
   }
 
   const ScoreField = ({
-    label,
-    keyName,
-  }: {
-    label: string
-    keyName:
-      | 'score'
-      | 'technical'
-      | 'tactical'
-      | 'physical'
-      | 'mentality'
-  }) => (
-    <div className="field">
-      <label>{label}</label>
+  label,
+  keyName,
+}: {
+  label: string
+  keyName:
+    | 'score'
+    | 'technical'
+    | 'tactical'
+    | 'physical'
+    | 'mentality'
+}) => (
+  <div className="field">
+    <label>{label}</label>
 
-      <select
-        value={form[keyName]}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            [keyName]: e.target.value as Score,
-          })
-        }
-      >
-        {scores.map((score) => (
-          <option key={score} value={score}>
-            {score}
-          </option>
-        ))}
-      </select>
-    </div>
+    <select
+      value={form[keyName]}
+      onChange={(e) =>
+        setForm({
+          ...form,
+          [keyName]: e.target.value as Score,
+        })
+      }
+    >
+      {scores.map((score) => (
+        <option key={score} value={score}>
+          {score}
+        </option>
+      ))}
+    </select>
+  </div>
+)
   )
 
   return (
@@ -266,6 +288,9 @@ if (updateError) {
             onClick={() => {
   setMessage('')
   setFixtureSearch('')
+  setShowFixtureResults(false)
+  setPlayerSearch('')
+  setShowPlayerResults(false)
   setOpen(true)
 }}
           >
@@ -388,33 +413,86 @@ if (updateError) {
               </div>
 
               <div className="field">
-                <label>Player</label>
+  <label>Player</label>
 
-                <select
-                  value={form.player_id}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      player_id: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select player</option>
+  <input
+    type="text"
+    placeholder="Search player, club, position or DOB..."
+    value={playerSearch}
+    onChange={(e) => {
+      setPlayerSearch(e.target.value)
+      setShowPlayerResults(true)
 
-                  {players.map((player) => (
-                    <option
-                      key={player.id}
-                      value={player.id}
-                    >
-                      {player.full_name}
-                      {player.date_of_birth
-                        ? ` · ${player.date_of_birth}`
-                        : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      setForm({
+        ...form,
+        player_id: '',
+      })
+    }}
+  />
 
+  {playerSearch.trim() && showPlayerResults && (
+    <div
+      style={{
+        border: '1px solid #d9e0e8',
+        borderRadius: 10,
+        maxHeight: 240,
+        overflowY: 'auto',
+        background: '#fff',
+        marginTop: 8,
+      }}
+    >
+      {filteredPlayers.length === 0 && (
+        <div style={{ padding: 12 }} className="muted">
+          No players found
+        </div>
+      )}
+
+      {filteredPlayers.slice(0, 20).map((player) => (
+        <button
+          key={player.id}
+          type="button"
+          onClick={() => {
+            setForm({
+              ...form,
+              player_id: player.id,
+            })
+
+            setPlayerSearch(player.full_name)
+            setShowPlayerResults(false)
+          }}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: 12,
+            border: 'none',
+            borderBottom: '1px solid #eef1f5',
+            background:
+              form.player_id === player.id
+                ? '#f1f6fc'
+                : '#fff',
+            textAlign: 'left',
+            cursor: 'pointer',
+          }}
+        >
+          <strong>{player.full_name}</strong>
+
+          <div
+            className="muted"
+            style={{ marginTop: 4, fontSize: 12 }}
+          >
+            {[
+              player.position,
+              player.clubs?.name,
+              player.date_of_birth,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </div>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
               <ScoreField
                 label="Overall score"
                 keyName="score"
