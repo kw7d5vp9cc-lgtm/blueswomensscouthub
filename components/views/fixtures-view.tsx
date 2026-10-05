@@ -27,6 +27,7 @@ export function FixturesView({ query }: { query: string }) {
   const [message, setMessage] = useState('')
   const [editingFixture, setEditingFixture] = useState<Fixture | null>(null)
 const [editOpen, setEditOpen] = useState(false)
+  const [editStatus, setEditStatus] = useState('available')
 
   const load = async () => {
     const [fixtureData, profileData] = await Promise.all([
@@ -58,6 +59,7 @@ const [editOpen, setEditOpen] = useState(false)
   )
 function openEditFixture(fixture: Fixture) {
   setEditingFixture(fixture)
+  setEditStatus(fixture.status || 'available')
 
   setForm({
     home_team: fixture.home_team || '',
@@ -95,10 +97,10 @@ function openEditFixture(fixture: Fixture) {
     fixture_reference: form.fixture_reference || null,
     allocated_scout: form.allocated_scout || null,
     notes: form.notes || null,
-    status: form.status,
+    status: editStatus,
   }
     console.log('Updating fixture:', editingFixture.id)
-console.log('Fixture status being saved:', form.status)
+console.log('Fixture status being saved:', editStatus)
 console.log('Fixture payload:', payload)
 
   const { error } = await supabase
@@ -584,48 +586,37 @@ await load()
           />
         </div>
 
-        <div className="field full">
-          <label>Assign scout</label>
-          <select
-            value={form.allocated_scout}
-            onChange={(e) => {
-  const scoutId = e.target.value
+       <div className="field full">
+  <label>Assign scout</label>
 
-  setForm((currentForm) => ({
-    ...currentForm,
-    allocated_scout: scoutId,
-    status: scoutId
-      ? currentForm.status === 'attended'
-        ? 'attended'
-        : 'allocated'
-      : 'available',
-  }))
-}}
-          >
-            <option value="">Available / unassigned</option>
+  <select
+    value={form.allocated_scout}
+    onChange={(e) =>
+      setForm((currentForm) => ({
+        ...currentForm,
+        allocated_scout: e.target.value,
+      }))
+    }
+  >
+    <option value="">Available / unassigned</option>
 
-            {profiles.map((profile) => (
-              <option
-                key={profile.id}
-                value={profile.id}
-              >
-                {profile.full_name}
-              </option>
-            ))}
-          </select>
-        </div>
+    {profiles.map((profile) => (
+      <option
+        key={profile.id}
+        value={profile.id}
+      >
+        {profile.full_name}
+      </option>
+    ))}
+  </select>
+</div>
+
 <div className="field full">
   <label>Fixture status</label>
-  <select
-    value={form.status}
-    onChange={(e) => {
-  const newStatus = e.target.value
 
-  setForm((currentForm) => ({
-    ...currentForm,
-    status: newStatus,
-  }))
-}}
+  <select
+    value={editStatus}
+    onChange={(e) => setEditStatus(e.target.value)}
   >
     <option value="available">Available</option>
     <option value="allocated">Allocated</option>
