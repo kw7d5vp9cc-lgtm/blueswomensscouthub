@@ -11,6 +11,7 @@ export function DashboardView({
 }) {
   const [upcomingActions, setUpcomingActions] = useState<any[]>([])
   const [actionsLoading, setActionsLoading] = useState(true)
+  const [allocatedFixtures, setAllocatedFixtures] = useState<any[]>([])
   const today = new Date().toISOString().slice(0, 10)
 useEffect(() => {
   async function loadUpcomingActions() {
@@ -18,7 +19,41 @@ useEffect(() => {
       setActionsLoading(false)
       return
     }
+const {
+  data: { user },
+} = await supabase.auth.getUser()
 
+if (user) {
+  const { data: fixtureData, error: fixtureError } = await supabase
+    .from('fixtures')
+    .select(`
+      id,
+      fixture_date,
+      kick_off,
+      home_team,
+      away_team,
+      venue,
+      age_group,
+      competition,
+      status
+    `)
+    .eq('allocated_scout', user.id)
+    .gte('fixture_date', today)
+    .neq('status', 'attended')
+    .order('fixture_date', { ascending: true })
+    .order('kick_off', { ascending: true })
+    .limit(10)
+
+  if (fixtureError) {
+    console.error(
+      'Unable to load allocated fixtures:',
+      fixtureError.message
+    )
+    setAllocatedFixtures([])
+  } else {
+    setAllocatedFixtures(fixtureData || [])
+  }
+}
 
     const { data, error } = await supabase
       .from('recruitment_actions')
@@ -220,6 +255,90 @@ const futureActions = upcomingActions.filter(
     </>
   )}
     </div>
+      <div className="panel">
+  <div className="panelhead">
+    <div>
+      <h2>My fixture assignments</h2>
+      <span className="muted">
+        Upcoming fixtures allocated to you
+      </span>
+    </div>
+
+    <span className="badge">
+      {allocatedFixtures.length} allocated
+    </span>
+  </div>
+
+  {allocatedFixtures.length === 0 && (
+    <p className="muted">
+      No upcoming fixture assignments.
+    </p>
+  )}
+
+  {allocatedFixtures.length > 0 && (
+    <div style={{ overflowX: 'auto', marginTop: 20 }}>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Fixture</th>
+            <th>KO</th>
+            <th>Age</th>
+            <th>Venue</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {allocatedFixtures.map((fixture) => (
+            <tr key={fixture.id}>
+              <td>
+                <strong>{fixture.fixture_date}</strong>
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('Fixtures')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    font: 'inherit',
+                  }}
+                >
+                  <strong>{fixture.home_team}</strong>
+                  {' v '}
+                  <strong>{fixture.away_team}</strong>
+                </button>
+              </td>
+
+              <td>
+                {fixture.kick_off?.slice(0, 5) || '-'}
+              </td>
+
+              <td>
+                {fixture.age_group || '-'}
+              </td>
+
+              <td>
+                {fixture.venue || '-'}
+              </td>
+
+              <td>
+                <span className="badge">
+                  {fixture.status || 'allocated'}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
   </div>
   )
 }
